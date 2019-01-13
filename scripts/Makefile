@@ -79,28 +79,30 @@ PACKAGES=symbiyosys edapack $(SIMS)
 all : 
 	echo "edapack-build"
 
-build-all : $(foreach pkg,$(PACKAGES),build-$(pkg))
+package-build-all : $(foreach pkg,$(PACKAGES),build-$(pkg))
 
-build-sims : $(foreach sim,$(SIMS),build-$(sim))
+package-build-sims : $(foreach sim,$(SIMS),build-$(sim))
 
-clean-all : $(foreach pkg,$(PACKAGES),clean-all-$(pkg))
+package-clean : $(foreach pkg,$(PACKAGES),package-clean-$(pkg))
 
-build-symbiyosys : fetch-symbiyosys $(BUILD_DIR)/gcc.d $(BUILD_DIR)/python.d
-	$(Q)$(GCC_ENV)$(PYTHON3_ENV) \
+package-cleanall : $(foreach pkg,$(PACKAGES),package-cleanall-$(pkg))
+
+package-build-symbiyosys : fetch-symbiyosys $(BUILD_DIR)/gcc.d $(BUILD_DIR)/python.d
+	$(Q)$(GCC_ENV) \
 		cd $(SUBPROJECTS_DIR)/edapack-symbiyosys/scripts ; \
 		$(MAKE) VERBOSE=$(VERBOSE)
 
-build-% : fetch-% 
+package-build-% : package-fetch-% 
 	$(Q)cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
 		$(MAKE) VERBOSE=$(VERBOSE)
 
-clean-% : 
+package-clean-% : 
 	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*); then \
 		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
 			$(MAKE) VERBOSE=$(VERBOSE) clean ; \
 	fi
 
-clean-all-% : 
+package-cleanall-% : 
 	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*); then \
 		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
 			$(MAKE) VERBOSE=$(VERBOSE) clean-all ; \
@@ -117,7 +119,7 @@ clean-all-% :
 #			$(SUBPROJECTS_DIR)/edapack ; \
 #	fi
 
-fetch-% :
+package-fetch-% :
 	$(Q)if test `echo $(PACKAGES) | grep $(*) | wc -l` -ne 1; then \
 		echo "Error: no package named $(*)"; \
 		echo "Package must be one of: $(PACKAGES)"; \
@@ -129,7 +131,7 @@ fetch-% :
 			$(SUBPROJECTS_DIR)/$(*) ; \
 	fi
 
-release-% :
+package-release-% :
 	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*) ; then \
 		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
 		$(MAKE) VERBOSE=$(VERBOSE) release; \

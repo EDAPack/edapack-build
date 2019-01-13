@@ -30,12 +30,18 @@ def read_pkginfo(pkginfo):
         if line.find("=") != -1:
             key = line[:line.find("=")]
             value = line[line.find("=")+1:]
-            print("key=" + key + " value=" + value)
             info[key] = value
         
-        print("Process line: " + line)
-    
     f.close()
+    
+    if "name" in info.keys() == False:
+        print("Error: no the package.info file does not specify the package name")
+        exit(1)
+        
+    if "version" in info.keys() == False:
+        print("Error: no the package.info file does not specify the package version")
+        exit(1)
+        
     return info
 
 #********************************************************************
@@ -50,32 +56,26 @@ def install(args):
     tf = None
     
     if args.archive != None:
-        print("archive=" + args.archive);
+        print("Note: installing from an archive (" + args.archive + ")");
         # Running in archive mode. Must open the archive and extract the package.info file
         tf = tarfile.open(args.archive, "r:gz")
         tf.extract("etc/package.info", os.path.dirname(etc_dir));
     else:
         # Running in local-install mode. Expect the package.info file to be in the etc_dir
-        print("no archive specified")
+        print("Note: installing from a directory")
         
     # TODO: Need to read the package.info file
     package_info = os.path.join(etc_dir, "package.info")
     pkginfo = read_pkginfo(package_info)
     
-    if "name" in pkginfo.keys() == False:
-        print("Error: no 'name' specified")
-        
-    if "version" in pkginfo.keys() == False:
-        print("Error: no 'version' specified")
-
     # Okay, we have a name, a version, and a target directory
     tooldir = os.path.join(edapack, pkginfo["name"])
     destdir = os.path.join(tooldir, pkginfo["version"])
-    print("Install to: " + destdir)
+    print("Note: Install package \"" + pkginfo["name"] + "\" to: " + destdir)
     
     if os.path.exists(destdir):
         if args.force:
-            print("TODO: delete old installation")
+            print("Note: deleting the existing installation")
             shutil.rmtree(destdir)
         else:
             print("Error: package " + pkginfo["name"] + 
@@ -94,7 +94,7 @@ def install(args):
                 os.path.join(destdir, d), 
                 True)
     else:
-        print("TODO: unpack the archive")
+        print("Note: unpacking the archive")
         tf.extractall(destdir)
     
    
@@ -127,7 +127,7 @@ def update_modulefile_latest(modulefiles_dir, version):
             break
     
     if is_latest == True:
-        print("Updating 'latest' modulefile")
+        print("Note: Updating the 'latest' modulefile")
         shutil.copy(
             os.path.join(modulefiles_dir, version),
             os.path.join(modulefiles_dir, "latest"))
@@ -160,6 +160,14 @@ def is_version_ge(v1, v2):
 #* uninstall()
 #********************************************************************
 def uninstall():
+    etc_dir = os.path.dirname(os.path.abspath(__file__))
+    version_dir = os.path.dirname(os.path.dirname(etc_dir))
+    tool_dir = os.path.dirname(os.path.dirname(version_dir))
+    
+    package_info = os.path.join(etc_dir, "package.info")
+    pkginfo = read_pkginfo(package_info)
+    
+    # uninstall will always be invoked on the installed package
     print("TODO: uninstall is currently unimplemented")
     exit(1)
 
