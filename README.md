@@ -1,2 +1,2 @@
 # edapack-build-tools
-Build tools for createing releases of EDAPack
+Build tools for creating releases of EDAPack
