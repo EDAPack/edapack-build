@@ -103,7 +103,7 @@ def install(args):
     if os.path.exists(modulefile):
         modulefiles_dir = os.path.join(
             edapack, 
-            "modulesfiles", 
+            "modulefiles", 
             pkginfo["name"])
         if os.path.exists(modulefiles_dir) == False:
             os.makedirs(modulefiles_dir)
@@ -157,20 +157,34 @@ def is_version_ge(v1, v2):
     return is_ge
 
 #********************************************************************
+#* uninstall()
+#********************************************************************
+def uninstall():
+    print("TODO: uninstall is currently unimplemented")
+    exit(1)
+
+#********************************************************************
 #* install main()
 #********************************************************************
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("edapack", help="Specifies the path to the edapack install")
-    parser.add_argument("--archive", help="Specifies the path to the archive to install")
-    parser.add_argument("--force", 
+    subparsers = parser.add_subparsers(
+        help="EDAPack installer sub-commands",
+        dest="subparser_name")
+    
+    install_cmd = subparsers.add_parser("install", help="install package")
+    install_cmd.add_argument("edapack", help="Specifies the path to the edapack install")
+    install_cmd.add_argument("--archive", help="Specifies the path to the archive to install")
+    install_cmd.add_argument("--force", 
         help="Overwrites an existing installation",
         action="store_true")
    
     args = parser.parse_args()
-   
-    install(args)
-        
+
+    if args.subparser_name == "install":
+        install(args)
+    elif args.subparser_name == "uninstall":
+        uninstall(args)
     
 if __name__ == "__main__":
     main()

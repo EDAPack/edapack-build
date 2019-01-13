@@ -4,6 +4,7 @@ EDAPACK_BUILD_DIR=$(abspath $(SCRIPTS_DIR)/..)
 TOOLS_DIR=$(EDAPACK_BUILD_DIR)/tools
 BUILD_DIR=$(EDAPACK_BUILD_DIR)/build
 PACKAGES_DIR=$(EDAPACK_BUILD_DIR)/packages
+SUBPROJECTS_DIR=$(EDAPACK_BUILD_DIR)/subprojects
 
 GNU_MIRROR_URL ?= http://mirrors.kernel.org/gnu
 
@@ -62,11 +63,81 @@ UNTARBZ=tar x$(TARV)jf
 UNTARGZ=tar x$(TARV)zf
 UNTARXZ=tar x$(TARV)Jf
 
-PATH:=$(TOOLS_DIR)/$(GCC_DIR)/bin:$(TOOLS_DIR)/python3/bin:$(PATH)
+GCC_ENV=export PATH=$(TOOLS_DIR)/$(GCC_DIR)/bin:$$PATH ; 
+PYTHON3_ENV=export PATH=$(TOOLS_DIR)/python3/bin:$$PATH ; 
+BISON_ENV=export PATH=$(TOOLS_DIR)/bison/bin:$$PATH ; 
+
+#PATH:=$(TOOLS_DIR)/$(GCC_DIR)/bin:$(TOOLS_DIR)/python3/bin:$(PATH)
+#export PATH
+
+PATH:=$(TOOLS_DIR)/python3/bin:$(PATH)
 export PATH
 
-all : tools
+SIMS=iverilog verilator
+PACKAGES=symbiyosys edapack $(SIMS)
 
+all : 
+	echo "edapack-build"
+
+build-all : $(foreach pkg,$(PACKAGES),build-$(pkg))
+
+build-sims : $(foreach sim,$(SIMS),build-$(sim))
+
+clean-all : $(foreach pkg,$(PACKAGES),clean-all-$(pkg))
+
+build-symbiyosys : fetch-symbiyosys $(BUILD_DIR)/gcc.d $(BUILD_DIR)/python.d
+	$(Q)$(GCC_ENV)$(PYTHON3_ENV) \
+		cd $(SUBPROJECTS_DIR)/edapack-symbiyosys/scripts ; \
+		$(MAKE) VERBOSE=$(VERBOSE)
+
+build-% : fetch-% 
+	$(Q)cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
+		$(MAKE) VERBOSE=$(VERBOSE)
+
+clean-% : 
+	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*); then \
+		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
+			$(MAKE) VERBOSE=$(VERBOSE) clean ; \
+	fi
+
+clean-all-% : 
+	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*); then \
+		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
+			$(MAKE) VERBOSE=$(VERBOSE) clean-all ; \
+	fi
+
+#gcc : fetch-gcc
+#	$(Q)cd $(SUBPROJECTS_DIR)/edapack-gcc/scripts ; \
+#		$(MAKE) VERBOSE=$(VERBOSE)
+
+#fetch-edapack :
+#	$(Q)if test ! -d $(SUBPROJECTS_DIR)/edapack ; then \
+#		mkdir -p $(SUBPROJECTS_DIR) ; \
+#		git clone https://github.com/EDAPack/edapack \
+#			$(SUBPROJECTS_DIR)/edapack ; \
+#	fi
+
+fetch-% :
+	$(Q)if test `echo $(PACKAGES) | grep $(*) | wc -l` -ne 1; then \
+		echo "Error: no package named $(*)"; \
+		echo "Package must be one of: $(PACKAGES)"; \
+		exit 1; \
+	fi
+	$(Q)if test ! -d $(SUBPROJECTS_DIR)/$(*) ; then \
+		mkdir -p $(SUBPROJECTS_DIR) ; \
+		git clone https://github.com/EDAPack/$(*) \
+			$(SUBPROJECTS_DIR)/$(*) ; \
+	fi
+
+release-% :
+	$(Q)if test -d $(SUBPROJECTS_DIR)/$(*) ; then \
+		cd $(SUBPROJECTS_DIR)/$(*)/scripts ; \
+		$(MAKE) VERBOSE=$(VERBOSE) release; \
+	else \
+		echo "Error: package $(*) hasn't been built"; \
+		exit 1; \
+	fi
+	
 tools : $(BUILD_DIR)/tools.d
 
 $(BUILD_DIR)/tools.d : \
@@ -126,6 +197,7 @@ $(BUILD_DIR)/python.d : $(PACKAGES_DIR)/$(PYTHON_TXZ)
 		./configure --prefix=$(TOOLS_DIR)/python3
 	$(Q)cd $(BUILD_DIR)/python/$(PYTHON_DIR); $(MAKE)
 	$(Q)cd $(BUILD_DIR)/python/$(PYTHON_DIR); $(MAKE) install
+	$(Q)$(TOOLS_DIR)/python3/bin/pip3 install PyGithub
 	$(Q)touch $@
 
 $(PACKAGES_DIR)/$(PYTHON_TXZ) :

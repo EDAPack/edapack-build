@@ -4,7 +4,7 @@
 #*
 #* Upload a binary release to a GitHub repository release area
 #*
-#* Copyright 2018 Matthew Ballance
+#* Copyright 2018-2019 Matthew Ballance
 #****************************************************************************
 from github import Github
 import os
@@ -17,7 +17,7 @@ parser.add_argument("--user", help="Specify the user")
 parser.add_argument("--repo", help="Specify the repository")
 parser.add_argument("--key", help="Specify the key")
 parser.add_argument("--version", help="Specify the release version")
-parser.add_argument("file", help="Specify the release version")
+parser.add_argument("files", nargs="+", help="Specify the release version")
 args = parser.parse_args()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,9 +29,10 @@ if os.path.exists(changelog) == False:
   print("Error: no ChangeLog.md exists")
   exit(1)
 
-if os.path.exists(args.file) == False:
-  print("Error: file to upload does not exist");
-  exit(1)
+for file in args.files:
+    if os.path.exists(file) == False:
+        print("Error: file to upload (" + file + ") does not exist");
+        exit(1)
 
 if args.key == None:
   print("Error: --key not specified")
@@ -95,15 +96,18 @@ except:
     name=args.version, 
     message=rls_message)
 
-for a in release.get_assets():
-  if a.name == basename(args.file):
-    print("Note: file \"" + basename(args.file) + "\" already exists")
-    print("  deleting...")
-    a.delete_asset()
+for file in args.files:
+    for a in release.get_assets():
+        if a.name == basename(file):
+            print("Note: file \"" + basename(args.file) + "\" already exists")
+            print("  deleting...")
+            a.delete_asset()
 
-print("Note: uploading file " + args.file)
-release.upload_asset(
-  path=args.file,
-  content_type='application/octet-stream')
-print("Done!")
+    print("Note: uploading file " + file)
+    release.upload_asset(
+        path=file,
+        content_type='application/octet-stream')
+    print("Done!")
+
+print("Upload release Complete!")
 

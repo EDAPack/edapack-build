@@ -54,10 +54,13 @@ sed -i \
 
 #DEPS="gperf bison flex wget glibc-devel.i686"
 DEPS="gperf bison flex wget unzip autoconf git xz glibc-devel"
-DEPS="$DEPS zlib-devel tcl tcl-devel patch"
+#DEPS="$DEPS zlib-devel tcl tcl-devel patch"
+DEPS="$DEPS zlib-devel patch ca-certificates openssl-devel"
 
 
 #if test ! -f /edapack-build/build/tools.d ; then
+  # Note, user can download a GCC install if they need to 
+  # obtain GCC independently of the system
   DEPS="$DEPS gcc gcc-c++"
 #fi
 
@@ -83,12 +86,14 @@ if test $? -ne 0; then exit 1; fi
 #yum install -y clang libstdc++-devel
 #if test $? -ne 0; then exit 1; fi
 
+# Add in development libs for 32-bit systems
+yum install -y glibc-devel.i686
+if test $? -ne 0; then exit 1; fi
+
 if test $shell = true; then
   runuser user
 #  runuser root
 fi
 
-#yum install -y glibc-devel.i686
-#if test $? -ne 0; then exit 1; fi
 
 
