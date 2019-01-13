@@ -99,7 +99,7 @@ except:
 for file in args.files:
     for a in release.get_assets():
         if a.name == basename(file):
-            print("Note: file \"" + basename(args.file) + "\" already exists")
+            print("Note: file \"" + basename(file) + "\" already exists")
             print("  deleting...")
             a.delete_asset()
 
