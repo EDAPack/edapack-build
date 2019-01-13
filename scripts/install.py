@@ -186,6 +186,8 @@ def main():
     install_cmd.add_argument("--force", 
         help="Overwrites an existing installation",
         action="store_true")
+
+    uninstall_cmd = subparsers.add_parser("uninstall", help="uninstall package")
    
     args = parser.parse_args()
 
